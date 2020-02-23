@@ -1,39 +1,59 @@
+import re
 from os import listdir
 from os.path import isfile, join
-import re
 
+import tags
 from api import get_album
-from tags import set_tags
 
 
 def files(basepath):
     return [f for f in listdir(basepath) if isfile(join(basepath, f))]
 
 
-def tags_from_filename(basepath, underscores=False, use_api=False):
+def print_tags(basepath):
+    for file in files(basepath):
+        filepath = basepath + file
+
+        try:
+            tags.print_tags(filepath)
+        except AttributeError:
+            pass
+
+
+def tags_from_filename(basepath):
     title_regex = "-_(.+)\\."
     artist_regex = "^(.+)_-_"
 
+    renamed = 0
+    skipped = 0
+
     for file in files(basepath):
         filepath = basepath + file
-        title = re.findall(title_regex, file)[0]
-        artist = re.findall(artist_regex, file)[0]
+        title_re = re.findall(title_regex, file)
+        artist_re = re.findall(artist_regex, file)
 
-        if underscores:
-            title = title.replace('_', ' ')
-            artist = artist.replace('_', ' ')
+        if len(title_re) == 0 or len(artist_re) == 0:
+            skipped += 1
+            continue
 
-        if use_api:
-            album = get_album(artist, title)
-            if album:
-                print(artist, title, album)
-                set_tags(filepath, title=title, artist=artist, album=album)
-            else:
-                print(artist, title)
-                set_tags(filepath, title=title, artist=artist)
+        title = title_re[0].replace('_', ' ')
+        artist = artist_re[0].replace('_', ' ')
 
-        else:
-            print(artist, title)
-            set_tags(filepath, title=title, artist=artist)
+        try:
+            tags.set_tags(filepath, title=title, artist=artist)
+            renamed += 1
+        except BaseException:
+            skipped += 1
 
-        print('-------------------------------------')
+    print('renamed', renamed, 'skipped', skipped)
+
+
+def fill_album_from_tags(basepath):
+    for file in files(basepath):
+        filepath = basepath + file
+        artist, title = tags.get_tags(filepath)
+        album = get_album(artist, title)
+
+        if album:
+            print(artist, title, album)
+            tags.set_tags(filepath, album=album)

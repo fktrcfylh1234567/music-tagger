@@ -1,9 +1,11 @@
 import http.client
 import json
 
+api_url = "macgyverapi-music-graph-v1.p.rapidapi.com"
+
 
 def get_album(artist, title):
-    connection = http.client.HTTPSConnection("macgyverapi-music-graph-v1.p.rapidapi.com")
+    connection = http.client.HTTPSConnection(api_url)
 
     data = {"search": title + ' ' + artist}
     payload = {'key': 'free', 'id': '9m9c8U4f', 'data': data}
@@ -29,7 +31,11 @@ def get_album(artist, title):
     if data['result'] == ["off"]:
         return
 
-    # Fields: ['albumTitle'], ['releaseDate'], ['thumbnails']['standard'], ['thumbnails']['high-quality'], ['genre']
+    # Fields: ['albumTitle']
+    # ['releaseDate']
+    # ['thumbnails']['standard']
+    # ['thumbnails']['high-quality']
+    # ['genre']
     album = data['result'][0]['albumTitle']
 
     return album
